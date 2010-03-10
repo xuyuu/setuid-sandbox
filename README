@@ -1,0 +1,91 @@
+This setuid helper will allow a process to execute a target executable that
+will be able to drop privileges:
+
+- the setuid sandbox will create a new PID namespace or will switch uid/gid to
+  isolate the process
+- a helper process, sharing the filesystem view of the existing process, will
+  be created. It will accept a request to chroot() the process to an empty
+  directory
+
+This is convenient because an executable can be launched, load libraries and
+open files and get chroot()-ed to an empty directory when it wants to drop
+filesystem access.
+
+Be sure to check the limitations below, as this can be dangerous.
+
+The Chrome/Chromium Linux sandbox is based on this design.
+
+
+Help:
+-----
+
+ Possible actions:
+ chroot:
+  - No chroot() helper (-c)
+
+ uids/gids:
+  - change uid/gid to a unique one in a pool (-u 0)
+  - change uid/gid to a common "sandboxed one" + prctl PROC_DUMPABLE to drop
+    the ability to ptrace and send signals to non sandboxed processes (-u 1)
+  - change uid to a common "sandboxed" one, + prctl PROC_DUMPABLE to drop
+    the ability to ptrace and not being ptrace-able (-u 2)
+  - none (-u 3)
+  - automatic (-u 4): try to change uid to a common one, abort only if no
+    CLONE_NEWPID
+
+  CLONE_NEWNET (-N)
+  CLONE_NEWPID (-P)
+
+ Example (using SBX_MONITOR environment):
+
+   /tmp/sandboxme -- /bin/sh
+   Cloned: write to 4 ($SBX_D) to chroot the sandboxed process
+   Hi from the sandbox! I'm pid=31044, uid=1879127553, gid=1879127553
+   sh-3.2$ pwd
+   /home/jln
+   sh-3.2$ echo C>&$SBX_D
+   sh-3.2$ <I chrooted you>
+   pwd
+   /
+
+Limitations:
+------------
+
+ - allows to escape from chroots  if available in a chroot!
+   (keep a FD to /, get chrooted to /something, fchdir to fd, open with relative
+   path)
+ - by design, can allow a process to become impossible to kill by a user (if the
+   administrator created SANDBOXUSER)
+ - sending signals is not prohibited from same uids if no new PID namespace was
+   created
+ - doesn't drop supplementary groups (we lack Windows' DENYONLY SIDs)
+ - clone NEWPID: your process becomes the child reaper (init) of the new
+   namespace. If this process exits, the namespace dies.
+ - environment is not cleaned
+ 
+
+Authors:
+--------
+
+This sandbox was designed by Julien Tinnes and Tavis Ormandy, with feedback from
+Chris Evans, Adam Langley and Markus Gutschke.
+
+TODO:
+-----
+
+ - check permissions / ownership on chroot directory. Use /tmp (and chroot to
+   the fd in /proc) ?
+ - support a SAFE_BUNDLED mode with hardcoded target as a security-in-depth
+   measure.
+ - use prctl SECURE_NOROOT ? Note: the setuid bit will not be honored in what we
+   execute next if we use the chroot() trick anyway.
+ - cleanup the environment (XDG_SESSION_COOKIE and other sensitive information)
+ - optimise do_setuid0 so that it doesn't iterate through all used pids first.
+ - Patch ARGV0 so that the process explicitely shows up as sandboxed
+ - reset all signal handlers?
+
+Known bugs:
+-----------
+
+If CLONE_NEWPID is used, CWD will not change to / after chdir in the helper
+process. Looks like a Linux bug to investigate.
