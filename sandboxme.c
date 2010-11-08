@@ -63,7 +63,7 @@ int main(int argc, char *const argv[], char *const envp[])
   int no_newpid_ns = 1;
   long uid_mode = 4;
   int newpid_ns = 0;    /* -1: no, 0: best effort, 1: mandatory */
-  cap_value_t cap_list[3];
+  cap_value_t cap_list[4];
 
   /* In theory we do not rely on euid 0 -> euid N transition magic:
    * - we drop capabilities and we become non dumpable manually 
@@ -82,8 +82,9 @@ int main(int argc, char *const argv[], char *const envp[])
 
   /* capabilities we need */
   cap_list[0] = CAP_SETUID;
-  cap_list[1] = CAP_SYS_ADMIN;  /* for CLONE_NEWPID */
-  cap_list[2] = CAP_SYS_CHROOT;
+  cap_list[1] = CAP_SETGID;
+  cap_list[2] = CAP_SYS_ADMIN;  /* for CLONE_NEWPID */
+  cap_list[3] = CAP_SYS_CHROOT;
 
   /* Reduce capabilities to what we need. This is generally useless because:
    * 1. we will still have root euid (unless capability FS is used)
