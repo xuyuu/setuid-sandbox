@@ -53,8 +53,7 @@ int do_chroot(void)
     return -1;
   }
 
-  /* FIXME: CLONE_PARENT ? */
-  pid = syscall(SYS_clone, CLONE_PARENT | CLONE_FS | SIGCHLD, 0, 0, 0);
+  pid = syscall(SYS_clone, CLONE_FS | SIGCHLD, 0, 0, 0);
 
   switch (pid) {
     struct rlimit nf;
@@ -185,8 +184,7 @@ int do_newpidns(void)
 {
   register pid_t pid;
 
-  /* FIXME: CLONE_PARENT ? */
-  pid = syscall(SYS_clone, CLONE_NEWPID | CLONE_PARENT | SIGCHLD, 0, 0, 0);
+  pid = syscall(SYS_clone, CLONE_NEWPID | SIGCHLD, 0, 0, 0);
 
   switch (pid) {
 
