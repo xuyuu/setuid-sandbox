@@ -148,9 +148,8 @@ int main(int argc, char *const argv[], char *const envp[])
     no_newpid_ns=do_newpidns();
     if (no_newpid_ns) {
       fprintf(stderr, "Could not get new PID namespace\n");
-    }
-    if (newpid_ns > 0) {
-      return EXIT_FAILURE;
+      if (newpid_ns > 0) 
+        return EXIT_FAILURE;
     }
   }
 
