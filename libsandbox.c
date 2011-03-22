@@ -14,6 +14,7 @@
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 #include "libsandbox.h"
 
 int getdumpable(void)
@@ -32,19 +33,31 @@ int chrootme()
 
   long int fd = -1;
   char *sbxdesc;
+  char *helper_pid_desc;
   char msg = MSG_CHROOTME;
   ssize_t cnt;
-  pid_t helper;
+  pid_t helper = -1, ret;
 
+  /* Get the file descriptor of the socketpair */
   sbxdesc = getenv(SBX_D);
   if (sbxdesc == NULL)
     return -1;
 
-  /* FIXME */
+  errno=0;
   fd = strtol(sbxdesc, (char **) NULL, 10);
-
-  if (fd == -1)
+  if (errno || (fd == -1))
     return -1;
+
+  /* Get the PID of the setuid helper */
+  helper_pid_desc = getenv(SBX_HELPER_PID);
+
+  /* If no PID is available, the default of -1 will do */
+  if (helper_pid_desc != NULL) {
+    errno=0;
+    helper = strtol(helper_pid_desc, (char **) NULL, 10);
+    if (errno || (helper == -1))
+      return -1;
+  }
 
   cnt = write(fd, &msg, 1);
   /* 1 is a handy size because it cannot be truncated */
@@ -60,7 +73,11 @@ int chrootme()
   close(fd);
 
   /* wait for helper process */
-  helper=waitpid(-1, NULL, 0);
-
-  return helper;
+  ret=waitpid(helper, NULL, 0);
+  if ((helper == -1) || (ret == helper))
+    return 0;
+  else {
+    perror("waitpid");
+    return -1;
+  }
 }

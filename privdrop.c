@@ -34,7 +34,9 @@
 
 #define NTHREADS 1024
 
+/* unsigned 32 bits in a string in base 10 */
 #define DESCSIZE 11
+
 /* Create a helper process that will chroot the sandboxed process when required
  * You can request chroot() by writing a special message to the socketpair
  */
@@ -47,6 +49,7 @@ int do_chroot(void)
   register pid_t pid;
   //char buf[10];
   char sdesc[DESCSIZE];
+  char pid_env[DESCSIZE];
   char msg;
 
   ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
@@ -131,6 +134,22 @@ int do_chroot(void)
        EXIT(EXIT_FAILURE)
      */
     /* FIXME */
+
+    /* Export the PID of the helper to the environment */
+    ret = snprintf(pid_env, sizeof(pid_env), "%u", pid);
+    if (ret < 0 || ret >= sizeof(pid_env)) {
+      fprintf(stderr, "snprintf failed\n");
+      return -1;
+    }
+
+    ret = setenv(SBX_HELPER_PID, pid_env, 1);
+    if (ret) {
+      perror("setenv");
+      return -1;
+    }
+
+    /* Export the file descriptor number of the socketpair
+     * to the environment */
     ret = snprintf(sdesc, sizeof(sdesc), "%u", sv[1]);
     if (ret < 0 || ret >= sizeof(sdesc)) {
       fprintf(stderr, "snprintf failed\n");
@@ -183,7 +202,7 @@ int do_setuid(uid_t uid, gid_t gid)
  */
 int do_newpidns(void)
 {
-  register pid_t pid, ret;
+  register pid_t pid, waited;
   int status;
 
   pid = syscall(SYS_clone, CLONE_NEWPID | SIGCHLD, 0, 0, 0);
@@ -200,8 +219,8 @@ int do_newpidns(void)
 
   default:
     /* Let's wait for our child */
-    ret = waitpid(pid, &status, 0);
-    if (ret != pid) {
+    waited = waitpid(pid, &status, 0);
+    if (waited != pid) {
       perror("waitpid");
       exit(EXIT_FAILURE);
     } else {
