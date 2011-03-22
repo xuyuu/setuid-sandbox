@@ -28,7 +28,8 @@
 #include "privdrop.h"
 #include "libsandbox.h"
 
-#define SAFE_EMPTY_DIR "/var/sandbox-empty"
+/* #define SAFE_DIR "/var/sandbox-empty" */
+#define SAFE_DIR "/proc/self/fdinfo" 
 
 #define NTHREADS 1024
 
@@ -98,11 +99,10 @@ int do_chroot(void)
       exit(EXIT_FAILURE);
     }
 
-    /* FIXME: change directory + check permissions first. Use /tmp and chroot
-     * to /proc? */
-    ret = chroot(SAFE_EMPTY_DIR);
+    /* FIXME: change directory + check permissions first. */
+    ret = chroot(SAFE_DIR);
     if (ret) {
-      perror("Helper: chroot (does " SAFE_EMPTY_DIR " exist?");
+      perror("Helper: chroot(\"" SAFE_DIR "\"");
       exit(EXIT_FAILURE);
     }
     ret = chdir("/");
