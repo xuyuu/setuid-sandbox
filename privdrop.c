@@ -16,6 +16,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/capability.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -178,11 +179,12 @@ int do_setuid(uid_t uid, gid_t gid)
 }
 
 /* we want to unshare(), but CLONE_NEWPID is not supported in unshare
- * so we use clone() instead
+ * so we use clone() instead, but we wait() for our child.
  */
 int do_newpidns(void)
 {
-  register pid_t pid;
+  register pid_t pid, ret;
+  int status;
 
   pid = syscall(SYS_clone, CLONE_NEWPID | SIGCHLD, 0, 0, 0);
 
@@ -197,7 +199,17 @@ int do_newpidns(void)
     return 0;
 
   default:
-    exit(EXIT_SUCCESS); 
+    /* Let's wait for our child */
+    ret = waitpid(pid, &status, 0);
+    if (ret != pid) {
+      perror("waitpid");
+      exit(EXIT_FAILURE);
+    } else {
+      /* FIXME: we proxy the exit code, but only if the child terminated normally */
+      if (WIFEXITED(status))
+        exit(WEXITSTATUS(status));
+      exit(EXIT_SUCCESS); 
+    }
   }
 }
 
