@@ -41,8 +41,10 @@ int main(void)
   if (creat("/test", 0000) < 0)
     printf("file creation (\"/test\") failed: %m\n");
   for (i = 0; i < sizeof(tests) / sizeof(tests[0]);i++)
-    if (open(tests[i], O_RDONLY))
-      printf("Opening %s %s\n", tests[i], open(tests[i], O_RDONLY) < 0 ? "failed" : "succeeded");
+    if (open(tests[i], O_RDONLY) >= 0)
+      printf("Opening %s: success\n", tests[i]);
+    else
+      printf("Opening %s: %m\n", tests[i]);
 
   pause();
   return 0;
