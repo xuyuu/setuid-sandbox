@@ -24,14 +24,11 @@ Help:
   - No chroot() helper (-c)
 
  uids/gids:
-  - change uid/gid to a unique one in a pool (-u 0)
-  - change uid/gid to a common "sandboxed one" + prctl PROC_DUMPABLE to drop
-    the ability to ptrace and send signals to non sandboxed processes (-u 1)
-  - change uid to a common "sandboxed" one, + prctl PROC_DUMPABLE to drop
-    the ability to ptrace and not being ptrace-able (-u 2)
-  - none (-u 3)
-  - automatic (-u 4): try to change uid to a common one, abort only if no
-    CLONE_NEWPID
+  - Do not switch uid or gid (-u0)
+  - Switch uid but not gid to "suidsandbox" (-u1)
+  - Switch uid and gid to "suidsandbox" (-u2)
+  - Get a unique uid/gid and switch to it (-u3)
+  - Like -u1 but accept failure as long as we have a new PID namespace (-u4, default)
 
   CLONE_NEWNET (-N)
   CLONE_NEWPID (-P)
@@ -83,9 +80,3 @@ TODO:
  - optimise do_setuid0 so that it doesn't iterate through all used pids first.
  - Patch ARGV0 so that the process explicitely shows up as sandboxed
  - reset all signal handlers?
-
-Known bugs:
------------
-
-If CLONE_NEWPID is used, CWD will not change to / after chdir in the helper
-process. Looks like a Linux bug to investigate.

@@ -42,14 +42,12 @@ void usage(char *argv0)
          "-c\t\tDon't start chroot() helper\n"
          "-P\t\tCreate a new PID namespace or abort\n"
          "-p\t\tDon't create a new PID namespace\n"
-         "-u0:\t\tDon't switch uids\n"
-         "-u1:\t\tSwitch uid to the common sandbox one\n"
-         "-u2:\t\tUse the common sandbox uid/gid\n"
-         "-u3:\t\tGet a unique uid/gid\n"
-         "-u4:\t\tTry to switch uid to the common sandboxed one. Abort if this"
-         " fails and we do not have a new PID namespace\n\n"
-         "The Default behavior is to create a new PID namespace if"
-         "available and -u1\n\n",
+         "-u0:\t\tDo not switch uid or gid\n"
+         "-u1:\t\tSwitch uid but not gid to "SANDBOXUSER"\n"
+         "-u2:\t\tSwitch uid and gid to "SANDBOXUSER"\n"
+         "-u3:\t\tGet a unique uid/gid and switch to it\n"
+         "-u4:\t\tLike -u1 but accept failure as long as we have a new PID"
+         " namespace (default)\n\n",
          (argv0 != NULL) ? argv0 : "sandbox") ;
 }
 
