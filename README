@@ -15,6 +15,28 @@ Be sure to check the limitations below, as this can be dangerous.
 
 The Chrome/Chromium Linux sandbox is based on this design.
 
+UID isolation
+-------------
+
+There are two main checks to take into consideration to assess the security of
+the pid isolation techniques:
+
+- The signal check in Linux is pretty relaxed. You can send a signal to any
+  process with the same uid as you. For SIGCONT and SIGSTOP this is even more
+  relaxed
+- The ptrace() check in Linux is pretty strict. You need to have the same
+  privileges. Privileges include uid, gid and capabilities. If you don't have
+  the CAP_SYS_PTRACE capability, the target also needs to be "dumpable"
+
+With this in mind, here are a few assessments:
+
+- If you get a new PID namespace, processes inside the sandbox cannot send
+  signals or ptrace processes outside of the sandbox. However, processes
+  outside of the sandbox can send signals to and ptrace processes inside the
+  sandbox.
+  Processes inside the sandbox can send signals or ptrace processes inside the
+  the sandbox. It's up to processes inside the sandbox to protect themselves
+  from ptrace() by becoming non dumpable if they want to.
 
 Help:
 -----
@@ -28,21 +50,28 @@ Help:
   - Switch uid but not gid to "suidsandbox" (-u1)
   - Switch uid and gid to "suidsandbox" (-u2)
   - Get a unique uid/gid and switch to it (-u3)
-  - Like -u1 but accept failure as long as we have a new PID namespace (-u4, default)
+  - Like -u1 but accept failure as long as we have a new PID namespace
+    (-u4, default)
 
-  CLONE_NEWNET (-N)
-  CLONE_NEWPID (-P)
+ CLONE_NEWNET (-N)
+ CLONE_NEWPID:
+  - Fail if CLONE_NEWPID is not available (-P)
+  - Do not try CLONE_NEWPID (-p)
 
- Example (using SBX_MONITOR environment):
+ Example :
 
-   /tmp/sandboxme -- /bin/sh
-   Cloned: write to 4 ($SBX_D) to chroot the sandboxed process
-   Hi from the sandbox! I'm pid=31044, uid=1879127553, gid=1879127553
-   sh-3.2$ pwd
+   $ /usr/sbin/sandboxme -- /bin/sh
+   Helper: write to 4 ($SBX_D) to chroot the sandboxed process
+   Could not find user suidsandbox
+   Hi from the sandbox! I'm pid=1, uid=90422, gid=5000, dumpable=N
+   Executing /bin/sh
+   Warning: we will become dumpable after execve()!
+     please make /bin/sh non readable
+   sh-4.1$ pwd
    /home/jln
-   sh-3.2$ echo C>&$SBX_D
-   sh-3.2$ <I chrooted you>
-   pwd
+   sh-4.1$ echo C>&$SBX_D
+   sh-4.1$ Helper: I chrooted you
+   sh-4.1$ pwd
    /
 
 Limitations:
@@ -60,11 +89,10 @@ Limitations:
    namespace. If this process exits, the namespace dies.
  - environment is not cleaned
  
-
 Authors:
 --------
 
-This sandbox was designed by Julien Tinnes and Tavis Ormandy, with feedback from
+This sandbox was designed by Julien Tinnes with feedback from Tavis Ormandy,
 Chris Evans, Adam Langley and Markus Gutschke.
 
 TODO:
