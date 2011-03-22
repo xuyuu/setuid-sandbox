@@ -15,6 +15,20 @@ Be sure to check the limitations below, as this can be dangerous.
 
 The Chrome/Chromium Linux sandbox is based on this design.
 
+Dumpable
+--------
+
+A non dumpable process cannot be ptraced() by a process without CAP_SYS_PTRACE
+  (usually limited to root).
+
+There are a couple of ways for a process to become non dumpable:
+  - use a prctl() with PR_SET_DUMPABLE
+  - execve() an executable that can't be read by the current process
+  - Switch from uid 0 to a non 0 uid
+
+Please note that the "dumpable" state will be reset on execve() depending on
+whether or not the target can be read.
+
 UID isolation
 -------------
 
@@ -38,6 +52,18 @@ With this in mind, here are a few assessments:
   the sandbox. It's up to processes inside the sandbox to protect themselves
   from ptrace() by becoming non dumpable if they want to.
 
+- If only the gid has been changed (-u1), sandboxed processes cannot ptrace
+  unsandboxed processes, but they can send signals to them. Reciprocally,
+  unsandboxed processes can send signals to sandboxed process but cannot ptrace
+  them.
+
+  If multiple users on the system are using sandboxme, their sandboxed
+  processes will only share the same gid.
+
+- If both gid and uid have been changed (-u2), sandboxed processes from two
+  different users on the system can ptrace and send signals to each other.
+  ptrace() can be restricted by becoming non dumpable.
+
 Help:
 -----
 
@@ -47,7 +73,7 @@ Help:
 
  uids/gids:
   - Do not switch uid or gid (-u0)
-  - Switch uid but not gid to "suidsandbox" (-u1)
+  - Switch gid to the one of "suidsandbox", but not the uid (-u1)
   - Switch uid and gid to "suidsandbox" (-u2)
   - Get a unique uid/gid and switch to it (-u3)
   - Like -u1 but accept failure as long as we have a new PID namespace

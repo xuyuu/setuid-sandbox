@@ -43,7 +43,7 @@ void usage(char *argv0)
          "-P\t\tCreate a new PID namespace or abort\n"
          "-p\t\tDon't create a new PID namespace\n"
          "-u0:\t\tDo not switch uid or gid\n"
-         "-u1:\t\tSwitch uid but not gid to "SANDBOXUSER"\n"
+         "-u1:\t\tSwitch gid to the one of user "SANDBOXUSER", but not the uid\n"
          "-u2:\t\tSwitch uid and gid to "SANDBOXUSER"\n"
          "-u3:\t\tGet a unique uid/gid and switch to it\n"
          "-u4:\t\tLike -u1 but accept failure as long as we have a new PID"
@@ -156,7 +156,7 @@ int main(int argc, char *const argv[], char *const envp[])
 
   sbxuser = getpwnam(SANDBOXUSER);
 
-  /* change uid */
+  /* change uid and / or gid */
   switch (uid_mode) {
   case 4:
     if (!sbxuser) {
@@ -169,7 +169,7 @@ int main(int argc, char *const argv[], char *const envp[])
         ret = do_setuid(olduid, oldgid);
       }
     } else {
-      ret = do_setuid(sbxuser->pw_uid, oldgid);
+      ret = do_setuid(olduid, sbxuser->pw_gid);
     }
     break;
   case 2:
@@ -185,7 +185,7 @@ int main(int argc, char *const argv[], char *const envp[])
       fprintf(stderr, "Could not find user %s\n", SANDBOXUSER);
       ret = -1;
     } else {
-      ret = do_setuid(sbxuser->pw_uid, oldgid);
+      ret = do_setuid(olduid, sbxuser->pw_gid);
     }
     break;
   case 0:
