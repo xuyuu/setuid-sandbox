@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "libsandbox.h"
 
 int getdumpable(void)
@@ -31,6 +34,7 @@ int chrootme()
   char *sbxdesc;
   char msg = MSG_CHROOTME;
   ssize_t cnt;
+  pid_t helper;
 
   sbxdesc = getenv(SBX_D);
   if (sbxdesc == NULL)
@@ -48,10 +52,15 @@ int chrootme()
     return -1;
 
   cnt = read(fd, &msg, 1);
-  if ((cnt == 1) && (msg == MSG_CHROOTED)) {
-    return 0;
-  } else {
+  if ((cnt != 1) || (msg != MSG_CHROOTED)) {
     fprintf(stderr, "Error reading confirmation message\n");
     return -1;
   }
+
+  close(fd);
+
+  /* wait for helper process */
+  helper=waitpid(-1, NULL, 0);
+
+  return helper;
 }
