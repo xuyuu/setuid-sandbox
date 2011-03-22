@@ -133,15 +133,9 @@ int main(int argc, char *const argv[], char *const envp[])
       return EXIT_FAILURE;
     }
   }
-
-  /* launch chroot helper */
-  if (chroot_mode) {
-    ret = do_chroot();
-    if (ret) {
-      fprintf(stderr, "Could not launch chroot helper\n");
-      return EXIT_FAILURE;
-    }
-  }
+  /* VERY IMPORTANT: CLONE_NEWPID and CLONE_FS should be in that order!
+   * You can't share FS accross namespaces
+   */
 
   /* Get a new PID namespace */
   if (newpid_ns >= 0) {
@@ -150,6 +144,15 @@ int main(int argc, char *const argv[], char *const envp[])
       fprintf(stderr, "Could not get new PID namespace\n");
       if (newpid_ns > 0) 
         return EXIT_FAILURE;
+    }
+  }
+
+  /* launch chroot helper */
+  if (chroot_mode) {
+    ret = do_chroot();
+    if (ret) {
+      fprintf(stderr, "Could not launch chroot helper\n");
+      return EXIT_FAILURE;
     }
   }
 

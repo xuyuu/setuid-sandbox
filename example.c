@@ -92,6 +92,13 @@ int main(void)
     printf("file creation (\"test\") failed: %m\n");
   if (creat("/test", 0000) < 0)
     printf("file creation (\"/test\") failed: %m\n");
+  if (open(".", O_RDONLY) < 0)
+    printf("Opening \".\" failed: %m\n");
+  if (open("/", O_RDONLY) < 0)
+    printf("Opening \"/\" failed: %m\n");
+  if (open("/tmp", O_RDONLY) < 0)
+    printf("Opening \"/tmp\" failed: %m\n");
+
   pause();
   return 0;
 
