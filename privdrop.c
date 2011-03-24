@@ -30,10 +30,10 @@
 #include "libsandbox.h"
 
 /* #define SAFE_DIR "/var/sandbox-empty" */
-#define SAFE_DIR "/proc/self/fdinfo" 
+#define SAFE_DIR "/proc/self/fdinfo"
 
 /* Alternative for kernels prior to 2.6.22 */
-#define SAFE_DIR2 "/proc/self" 
+#define SAFE_DIR2 "/proc/self/fd" 
 
 #define NTHREADS 1024
 
