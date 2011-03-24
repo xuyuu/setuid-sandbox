@@ -32,6 +32,9 @@
 /* #define SAFE_DIR "/var/sandbox-empty" */
 #define SAFE_DIR "/proc/self/fdinfo" 
 
+/* Alternative for kernels prior to 2.6.22 */
+#define SAFE_DIR2 "/proc/self" 
+
 #define NTHREADS 1024
 
 /* unsigned 32 bits in a string in base 10 */
@@ -51,6 +54,18 @@ int do_chroot(void)
   char sdesc[DESCSIZE];
   char pid_env[DESCSIZE];
   char msg;
+  char *safedir=NULL;
+  struct stat sdir_stat;
+
+  if (!stat(SAFE_DIR, &sdir_stat) && S_ISDIR(sdir_stat.st_mode))
+    safedir = SAFE_DIR;
+  else
+    if (!stat(SAFE_DIR2, &sdir_stat) && S_ISDIR(sdir_stat.st_mode))
+      safedir = SAFE_DIR2;
+    else {
+      fprintf(stderr, "Helper: %s does not exist ?!\n", SAFE_DIR2);
+      return -1;
+    }
 
   ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
   if (ret == -1) {
@@ -104,9 +119,9 @@ int do_chroot(void)
     }
 
     /* FIXME: change directory + check permissions first. */
-    ret = chroot(SAFE_DIR);
+    ret = chroot(safedir);
     if (ret) {
-      perror("Helper: chroot(\"" SAFE_DIR "\"");
+      perror("Helper: chroot");
       exit(EXIT_FAILURE);
     }
     ret = chdir("/");

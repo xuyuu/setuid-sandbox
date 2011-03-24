@@ -7,7 +7,7 @@
 #define MSG_CHROOTME 'C'
 #define MSG_CHROOTED 'O'
 
-int chrootme();
+pid_t chrootme();
 int getdumpable();
 
 #endif

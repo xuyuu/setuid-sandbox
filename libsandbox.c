@@ -28,7 +28,7 @@ int getdumpable(void)
 }
 
 /* return -1 on failure */
-int chrootme()
+pid_t chrootme()
 {
 
   long int fd = -1;
@@ -74,8 +74,8 @@ int chrootme()
 
   /* wait for helper process */
   ret=waitpid(helper, NULL, 0);
-  if ((helper == -1) || (ret == helper))
-    return 0;
+  if (ret != -1 && ((helper == -1) || (ret == helper)) )
+    return ret;
   else {
     perror("waitpid");
     return -1;
