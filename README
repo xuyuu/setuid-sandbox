@@ -15,6 +15,14 @@ Be sure to check the limitations below, as this can be dangerous.
 
 The Chrome/Chromium Linux sandbox is based on this design.
 
+Build instructions
+------------------
+
+1. Install libcap2 and the appropriate headers (most likely, your distributions
+   will offer a libcap-dev or libcap-devel package)
+2. Use "make"
+3. Install sandboxme as setuid root (chmod 4511 sandboxme && chown root:root sandboxme)
+
 Dumpable
 --------
 
