@@ -21,7 +21,7 @@ Build instructions
 1. Install libcap2 and the appropriate headers (most likely, your distributions
    will offer a libcap-dev or libcap-devel package)
 2. Use "make"
-3. Install sandboxme as setuid root (chmod 4511 sandboxme && chown root:root sandboxme)
+3. Install sandboxme as setuid root (chown root:root sandboxme && chmod 4511 sandboxme)
 
 Dumpable
 --------
