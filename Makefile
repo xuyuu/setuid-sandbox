@@ -8,7 +8,7 @@ objects := $(patsubst %.c,%.o,$(wildcard *.c))
 	gcc -c $(CFLAGS) $< -o $@
 
 sandboxme: sandboxme.o privdrop.o
-	gcc $(CFLAGS) -lcap $^ -o $@
+	gcc $(CFLAGS) $^ -o $@ -lcap
 
 example: example.o libsandbox.o
 	gcc $(CFLAGS) $^ -o $@
