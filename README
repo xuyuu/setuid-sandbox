@@ -123,12 +123,6 @@ Limitations:
    namespace. If this process exits, the namespace dies.
  - environment is not cleaned
  
-Authors:
---------
-
-This sandbox was designed by Julien Tinnes with feedback from Tavis Ormandy,
-Chris Evans, Adam Langley and Markus Gutschke.
-
 TODO:
 -----
 
