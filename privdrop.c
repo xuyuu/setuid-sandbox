@@ -242,7 +242,12 @@ int do_newpidns(void)
 
   /* child: we are pid number 1 in the new namespace */
   case 0:
-    return 0;
+    /* We add an extra check for old kernels because sys_clone() doesn't
+       EINVAL on unknown flags */
+    if (getpid() == 1)
+      return 0;
+    else
+      return -1;
 
   default:
     /* Let's wait for our child */
